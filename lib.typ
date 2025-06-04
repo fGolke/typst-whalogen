@@ -74,6 +74,11 @@
 #let _parse_ce(_state, _char_in, _buffer) = {  // (str, str, str) -> (str, str, str)
   let _out = ""
 
+  // Bypass parser while in math mode
+  if _state == "math" and not _char_in.contains(regex("\$")) {
+	return ("math", _flush_ce_buffer(_state, _buffer), _char_in)
+  }
+
   // end previous states on whitespace
   if _char_in.contains(regex("\s")) {
     _out = _flush_ce_buffer(_state, _buffer)
@@ -151,7 +156,7 @@
   // on math...
   if _char_in.contains(regex("\$")) {
     (_state, _out, _buffer) = (
-      "_": ("", "", "")
+	  "math": ("", _flush_ce_buffer(_state, _buffer), ""),
     ).at(_state, default: ("math", _flush_ce_buffer(_state, _buffer), ""))
   }
 
