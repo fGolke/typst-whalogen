@@ -157,7 +157,7 @@
   if _char_in.contains(regex("\$")) {
     (_state, _out, _buffer) = (
 	  "math": ("", _flush_ce_buffer(_state, _buffer), ""),
-    ).at(_state, default: ("math", _flush_ce_buffer(_state, _buffer), ""))
+    ).at(_state, default: ("math", _buffer, ""))
   }
 
   // isotope parsing
@@ -207,13 +207,11 @@
   return (_state, _out, _buffer)
 }
 
-#let _replace_math(s) = {
+#let _escape_math(s) = {
     for match in s.matches(regex("(\$.*?\$)")) {
-        s = s.replace(match.text, ")" + match.text.slice(1,-1) + " upright(")
+        s = s.replace(match.text, "#[" + match.text + "]")
     }
-        
-  let out = "upright(" + s + ")"
-  out.replace("upright( )","").replace("upright()","")
+	s
 }
 
 // higher level parser which parses strings in a larger context
@@ -232,9 +230,9 @@
       for decorated_arrow_match in decorated_arrow_matches {
         decorated_arrow_result = _replace_with_content(decorated_arrow_result, replace: decorated_arrow_match.text, content: [
           #xarrow(sym: symbol, margin: 0.5em, [
-            #eval("$" + _replace_math(decorated_arrow_match.captures.at(0)) + "$")
+            #eval("$" + _escape_math(decorated_arrow_match.captures.at(0)) + "$")
           ], opposite: [
-            #eval("$" + _replace_math(decorated_arrow_match.captures.at(1)) + "$")
+            #eval("$" + _escape_math(decorated_arrow_match.captures.at(1)) + "$")
           ]
           )
         ])
@@ -245,7 +243,7 @@
       for decorated_arrow_match in decorated_arrow_matches {
         decorated_arrow_result = _replace_with_content(decorated_arrow_result, replace: decorated_arrow_match.text, content: [
           #xarrow(sym: symbol, margin: 0.5em, [
-            #eval("$" + _replace_math(decorated_arrow_match.captures.at(0)) + "$")
+            #eval("$" + _escape_math(decorated_arrow_match.captures.at(0)) + "$")
           ])
         ])
       }
@@ -287,7 +285,7 @@
   // convert string to content
   for result_sub_str in _fill_computed_ce_content(result) {
     if type(result_sub_str) == str {
-      result_sub_str = "$" + _replace_math(result_sub_str) + "$"
+      result_sub_str = "$" + _escape_math(result_sub_str) + "$"
       $#eval(result_sub_str)$
     } else if type(result_sub_str) == content {
       result_sub_str
